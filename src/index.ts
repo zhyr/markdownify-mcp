@@ -1,11 +1,5 @@
 #!/usr/bin/env node
 
-/**
-MCPs support
-- prompts
-- resources
-*/
-
 import { z } from "zod";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
@@ -82,10 +76,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         isError: false,
       };
     } catch (e) {
-      return {
-        content: [{ type: "text", text: `Error: ${e.message}` }],
-        isError: true,
-      };
+      if (e instanceof Error) {
+        return {
+          content: [{ type: "text", text: `Error: ${e.message}` }],
+          isError: true,
+        };
+      } else {
+        console.error(e);
+        return {
+          content: [{ type: "text", text: `Error: Unknown error occurred` }],
+          isError: true,
+        };
+      }
     }
   }
 
@@ -102,10 +104,18 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         isError: false,
       };
     } catch (e) {
-      return {
-        content: [{ type: "text", text: `Error: ${e.message}` }],
-        isError: true,
-      };
+      if (e instanceof Error) {
+        return {
+          content: [{ type: "text", text: `Error: ${e.message}` }],
+          isError: true,
+        };
+      } else {
+        console.error(e);
+        return {
+          content: [{ type: "text", text: `Error: Unknown error occurred` }],
+          isError: true,
+        };
+      }
     }
   }
 
