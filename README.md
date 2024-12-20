@@ -1,11 +1,21 @@
-TODO:
-- Dependency issue related to the use of UVX by the server
-- Treat the cleaning workflow as an MCP prompt
+# Markdownify MCP Server
 
+Markdownify is a Model Context Protocol (MCP) server that converts various file types and web content to Markdown format. It provides a set of tools to transform PDFs, images, audio files, web pages, and more into easily readable and shareable Markdown text.
 
-# MCP Server Boilerplate
+## Features
 
-This project provides a boilerplate for creating a Model Context Protocol (MCP) server. It's designed to help you quickly set up and start developing your own MCP server with minimal configuration.
+- Convert multiple file types to Markdown:
+  - PDF
+  - Images
+  - Audio (with transcription)
+  - DOCX
+  - XLSX
+  - PPTX
+- Convert web content to Markdown:
+  - YouTube video transcripts
+  - Bing search results
+  - General web pages
+- Retrieve existing Markdown files
 
 ## Getting Started
 
@@ -14,6 +24,9 @@ This project provides a boilerplate for creating a Model Context Protocol (MCP) 
    ```
    pnpm install
    ```
+
+Note: this will also install `uv` and related Python depdencies.
+
 3. Build the project:
    ```
    pnpm run build
@@ -25,33 +38,18 @@ This project provides a boilerplate for creating a Model Context Protocol (MCP) 
 
 ## Development
 
-- Use `npm run dev` to start the TypeScript compiler in watch mode
-- Modify `src/index.ts` to add your custom tools and logic
+- Use `pnpm run dev` to start the TypeScript compiler in watch mode
+- Modify `src/server.ts` to customize server behavior
+- Add or modify tools in `src/tools.ts`
 
-## Customizing Your Server
-
-1. Update the server info in `src/index.ts`:
-   ```typescript
-   const server = new Server(
-     {
-       name: "your-server-name",
-       version: "your-version",
-     },
-     // ...
-   );
-   ```
-
-2. Define your tools in the `ListToolsRequestSchema` handler
-3. Implement your tool logic in the `CallToolRequestSchema` handler
-
-### Usage with Desktop App
+## Usage with Desktop App
 
 To integrate this server with a desktop app, add the following to your app's server configuration:
 
 ```json
 {
   "mcpServers": {
-    "ocr": {
+    "markdownify": {
       "command": "node",
       "args": [
         "{ABSOLUTE PATH TO FILE HERE}/dist/index.js"
@@ -60,3 +58,24 @@ To integrate this server with a desktop app, add the following to your app's ser
   }
 }
 ```
+
+## Available Tools
+
+- `youtube-to-markdown`: Convert YouTube videos to Markdown
+- `pdf-to-markdown`: Convert PDF files to Markdown
+- `bing-search-to-markdown`: Convert Bing search results to Markdown
+- `webpage-to-markdown`: Convert web pages to Markdown
+- `image-to-markdown`: Convert images to Markdown with metadata
+- `audio-to-markdown`: Convert audio files to Markdown with transcription
+- `docx-to-markdown`: Convert DOCX files to Markdown
+- `xlsx-to-markdown`: Convert XLSX files to Markdown
+- `pptx-to-markdown`: Convert PPTX files to Markdown
+- `get-markdown-file`: Retrieve an existing Markdown file
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
