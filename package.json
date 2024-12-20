@@ -1,11 +1,11 @@
 {
-  "name": "mcp-boilerplate",
+  "name": "mcp-markdownify-server",
   "version": "0.0.1",
-  "description": "MCP Boilerplate Server",
+  "description": "MCP Markdownify Server - Model Context Protocol Server for Converting Almost Anything to Markdown",
   "license": "MIT",
-  "author": "@zcaceres (@zachcaceres zach.dev)",
-  "homepage": "https://github.com/zcaceres/mcp-boilerplate",
-  "bugs": "https://github.com/zcaceres/mcp-boilerplate/issues",
+  "author": "@zcaceres (@zachcaceres | zach.dev)",
+  "homepage": "https://github.com/zcaceres/mcp-markdownify-server",
+  "bugs": "https://github.com/zcaceres/mcp-markdownify-server/issues",
   "type": "module",
   "bin": {
     "mcp-markdownify-server": "dist/index.js"

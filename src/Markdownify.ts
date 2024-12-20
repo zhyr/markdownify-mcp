@@ -100,7 +100,7 @@ export class Markdownify {
       throw new Error("File does not exist");
     }
 
-    const text = fs.readFileSync(filePath, "utf-8");
+    const text = await fs.promises.readFile(filePath, "utf-8");
 
     return {
       path: filePath,

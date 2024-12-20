@@ -18,7 +18,7 @@ const RequestPayloadSchema = z.object({
 export function createServer() {
   const server = new Server(
     {
-      name: "mcp-convert-to-markdown",
+      name: "mcp-markdownify-server",
       version: "0.1.0",
     },
     {
@@ -88,6 +88,7 @@ export function createServer() {
 
         return {
           content: [
+            { type: "text", text: `Output file: ${result.path}` },
             { type: "text", text: `Converted content:` },
             { type: "text", text: result.text },
           ],
