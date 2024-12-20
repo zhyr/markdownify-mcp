@@ -1,3 +1,8 @@
+TODO:
+- Dependency issue related to the use of UVX by the server
+- Treat the cleaning workflow as an MCP prompt
+
+
 # MCP Server Boilerplate
 
 This project provides a boilerplate for creating a Model Context Protocol (MCP) server. It's designed to help you quickly set up and start developing your own MCP server with minimal configuration.
@@ -38,3 +43,20 @@ This project provides a boilerplate for creating a Model Context Protocol (MCP) 
 
 2. Define your tools in the `ListToolsRequestSchema` handler
 3. Implement your tool logic in the `CallToolRequestSchema` handler
+
+### Usage with Desktop App
+
+To integrate this server with a desktop app, add the following to your app's server configuration:
+
+```json
+{
+  "mcpServers": {
+    "ocr": {
+      "command": "node",
+      "args": [
+        "{ABSOLUTE PATH TO FILE HERE}/dist/index.js"
+      ]
+    }
+  }
+}
+```
