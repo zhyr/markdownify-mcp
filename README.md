@@ -53,7 +53,10 @@ To integrate this server with a desktop app, add the following to your app's ser
       "command": "node",
       "args": [
         "{ABSOLUTE PATH TO FILE HERE}/dist/index.js"
-      ]
+      ],
+      "env": {
+        "UV_PATH": "/path/to/uv"
+      }
     }
   }
 }

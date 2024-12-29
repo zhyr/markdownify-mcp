@@ -53,7 +53,7 @@ export function createServer() {
             result = await Markdownify.toMarkdown({
               url: validatedArgs.url,
               projectRoot: validatedArgs.projectRoot,
-              uvPath: validatedArgs.uvPath,
+              uvPath: validatedArgs.uvPath || process.env.UV_PATH,
             });
             break;
 
@@ -69,7 +69,7 @@ export function createServer() {
             result = await Markdownify.toMarkdown({
               filePath: validatedArgs.filepath,
               projectRoot: validatedArgs.projectRoot,
-              uvPath: validatedArgs.uvPath,
+              uvPath: validatedArgs.uvPath || process.env.UV_PATH,
             });
             break;
 
