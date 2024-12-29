@@ -46,7 +46,7 @@ Note: this will also install `uv` and related Python depdencies.
 
 To integrate this server with a desktop app, add the following to your app's server configuration:
 
-```json
+```js
 {
   "mcpServers": {
     "markdownify": {
