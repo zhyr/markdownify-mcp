@@ -55,6 +55,7 @@ To integrate this server with a desktop app, add the following to your app's ser
         "{ABSOLUTE PATH TO FILE HERE}/dist/index.js"
       ],
       "env": {
+        // By default, the server will use the default install location of `uv`
         "UV_PATH": "/path/to/uv"
       }
     }
