@@ -29,7 +29,7 @@ export class Markdownify {
     }
 
     const { stdout, stderr } = await execAsync(
-      `${uvPath} run ${markitdownPath} ${filePath}`,
+      `${uvPath} run ${markitdownPath} "${filePath}"`,
     );
 
     if (stderr) {
