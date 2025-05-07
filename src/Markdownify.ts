@@ -48,6 +48,17 @@ export class Markdownify {
     return tempOutputPath;
   }
 
+  private static normalizePath(p: string): string {
+    return path.normalize(p);
+  }
+  
+  private static expandHome(filepath: string): string {
+    if (filepath.startsWith('~/') || filepath === '~') {
+      return path.join(os.homedir(), filepath.slice(1));
+    }
+    return filepath;
+  }
+
   static async toMarkdown({
     filePath,
     url,
@@ -96,6 +107,13 @@ export class Markdownify {
   }: {
     filePath: string;
   }): Promise<MarkdownResult> {
+    // Check file type is *.md or *.markdown
+    const normPath = this.normalizePath(path.resolve(this.expandHome(filePath)));
+    const markdownExt = [".md", ".markdown"];
+    if (!markdownExt.includes(path.extname(normPath))){
+      throw new Error("Required file is not a Markdown file.");
+    }
+
     if (!fs.existsSync(filePath)) {
       throw new Error("File does not exist");
     }
