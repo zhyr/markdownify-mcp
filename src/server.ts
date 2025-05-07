@@ -7,6 +7,8 @@ import {
 import { Markdownify } from "./Markdownify.js";
 import * as tools from "./tools.js";
 import { CallToolRequest } from "@modelcontextprotocol/sdk/types.js";
+import is_ip_private from "private-ip";
+import { URL } from "node:url";
 
 const RequestPayloadSchema = z.object({
   filepath: z.string().optional(),
@@ -50,6 +52,12 @@ export function createServer() {
             if (!validatedArgs.url) {
               throw new Error("URL is required for this tool");
             }
+
+            const parsedUrl = new URL(validatedArgs.url);
+            if (is_ip_private(parsedUrl.hostname)) {
+              throw new Error(`Fetching ${validatedArgs.url} is potentially dangerous, aborting.`);
+            }
+    
             result = await Markdownify.toMarkdown({
               url: validatedArgs.url,
               projectRoot: validatedArgs.projectRoot,
