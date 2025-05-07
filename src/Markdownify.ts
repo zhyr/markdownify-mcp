@@ -114,6 +114,13 @@ export class Markdownify {
       throw new Error("Required file is not a Markdown file.");
     }
 
+    if (process.env?.MD_SHARE_DIR) {
+      const allowedShareDir = this.normalizePath(path.resolve(this.expandHome(process.env.MD_SHARE_DIR)));
+      if (!normPath.startsWith(allowedShareDir)) {
+        throw new Error(`Only files in ${allowedShareDir} are allowed.`);
+      }
+    }
+
     if (!fs.existsSync(filePath)) {
       throw new Error("File does not exist");
     }
