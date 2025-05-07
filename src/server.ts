@@ -51,9 +51,13 @@ export function createServer() {
           case tools.WebpageToMarkdownTool.name:
             if (!validatedArgs.url) {
               throw new Error("URL is required for this tool");
-            }
-
+            }     
+            
             const parsedUrl = new URL(validatedArgs.url);
+            if (!["http:", "https:"].includes(parsedUrl.protocol)) {
+              throw new Error("Only http: and https: schemes are allowed.");
+            }
+            
             if (is_ip_private(parsedUrl.hostname)) {
               throw new Error(`Fetching ${validatedArgs.url} is potentially dangerous, aborting.`);
             }
