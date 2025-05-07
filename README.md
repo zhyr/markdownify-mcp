@@ -76,7 +76,7 @@ To integrate this server with a desktop app, add the following to your app's ser
 - `docx-to-markdown`: Convert DOCX files to Markdown
 - `xlsx-to-markdown`: Convert XLSX files to Markdown
 - `pptx-to-markdown`: Convert PPTX files to Markdown
-- `get-markdown-file`: Retrieve an existing Markdown file
+- `get-markdown-file`: Retrieve an existing Markdown file. File extension must end with: *.md, *.markdown.
 
 ## Contributing
 
