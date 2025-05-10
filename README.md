@@ -1,5 +1,7 @@
 # Markdownify MCP Server
 
+> Help! I need someone with a Windows computer to help me add support for Markdownify-MCP on Windows. PRs exist but I cannot test them. Email github@zach.dev if interested.
+
 ![markdownify mcp logo](logo.jpg)
 
 Markdownify is a Model Context Protocol (MCP) server that converts various file types and web content to Markdown format. It provides a set of tools to transform PDFs, images, audio files, web pages, and more into easily readable and shareable Markdown text.
