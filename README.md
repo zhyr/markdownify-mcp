@@ -1,6 +1,6 @@
 # Markdownify MCP Server
 
-> Help! I need someone with a Windows computer to help me add support for Markdownify-MCP on Windows. PRs exist but I cannot test them. Email github@zach.dev if interested.
+> Help! I need someone with a Windows computer to help me add support for Markdownify-MCP on Windows. PRs exist but I cannot test them. Post [here](https://github.com/zcaceres/markdownify-mcp/issues/18) if interested.
 
 ![markdownify mcp logo](logo.jpg)
 
