@@ -59,6 +59,7 @@ export class Markdownify {
     projectRoot?: string;
     uvPath?: string;
   }): Promise<MarkdownResult> {
+    console.log(`[Markdownify] toMarkdown called with:`, { filePath, url });
     try {
       let inputPath: string;
       let isTemporary = false;
@@ -106,5 +107,31 @@ export class Markdownify {
       path: filePath,
       text: text,
     };
+  }
+
+  static async bingSearchToMarkdown(query: string): Promise<MarkdownResult> {
+    // 这里应集成真实的 Bing 搜索转 Markdown 逻辑，暂返回模拟内容
+    const text = `# Bing 搜索结果\n\n查询: ${query}\n\n- 示例结果 1\n- 示例结果 2`;
+    const path = await this.saveToTempFile(text);
+    return { path, text };
+  }
+
+  static async socialToMarkdown(url: string, platform: string, options?: any): Promise<MarkdownResult> {
+    // 这里应集成真实的社交媒体转 Markdown 逻辑，暂返回模拟内容
+    const text = `# 社交媒体内容\n\n平台: ${platform}\nURL: ${url}\n\n- 示例内容 1\n- 示例内容 2`;
+    const path = await this.saveToTempFile(text);
+    return { path, text };
+  }
+
+  static async diagramToMarkdown(description: string, diagramType: string, data?: any, options?: any): Promise<MarkdownResult> {
+    // 这里应集成真实的图表转 Markdown 逻辑，暂返回模拟 mermaid 图
+    const text = `# 图表 (${diagramType})\n\n\`\`\`mermaid\nflowchart TB\n  A[开始] --> B[结束]\n\`\`\``;
+    const path = await this.saveToTempFile(text);
+    return { path, text };
+  }
+
+  static async pdfToMarkdown({ filePath }: { filePath: string }) {
+    if (!fs.existsSync(filePath)) throw new Error('File not found: ' + filePath);
+    return await this.toMarkdown({ filePath });
   }
 }

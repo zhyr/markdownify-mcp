@@ -4,7 +4,7 @@ export class MarkdownifyService {
    * 将YouTube视频转换为Markdown
    */
   async youtubeToMarkdown(videoUrl) {
-    console.log(`处理YouTube视频: ${videoUrl}`);
+    console.log(`[MarkdownifyService] youtubeToMarkdown called with:`, videoUrl);
     
     // 提取视频ID
     let videoId = '';

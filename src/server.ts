@@ -38,6 +38,7 @@ export function createServer() {
     CallToolRequestSchema,
     async (request: CallToolRequest) => {
       const { name, arguments: args } = request.params;
+      console.log(`[MCP] 收到工具调用: ${name}, 参数:`, args);
 
       const validatedArgs = RequestPayloadSchema.parse(args);
 

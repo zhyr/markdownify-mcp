@@ -27,6 +27,7 @@ export default class UVX {
     // }
 
     // HACK ALERT!
+    console.log(`[UVX] setup called`);
     return new UVX("/Users/zachcaceres/.local/bin/uvx");
   }
 
