@@ -22,7 +22,11 @@ export class Markdownify {
     uvPath: string,
   ): Promise<string> {
     const venvPath = path.join(projectRoot, ".venv");
-    const markitdownPath = path.join(venvPath, "bin", "markitdown");
+    const markitdownPath = path.join(
+      venvPath, 
+      process.platform === 'win32' ? 'Scripts' : 'bin', 
+      `markitdown${process.platform === 'win32' ? '.exe' : ''}`
+    );
 
     if (!fs.existsSync(markitdownPath)) {
       throw new Error("markitdown executable not found");
@@ -39,13 +43,29 @@ export class Markdownify {
     return stdout;
   }
 
-  private static async saveToTempFile(content: string): Promise<string> {
+  private static async saveToTempFile(content: string | Buffer, suggestedExtension?: string | null): Promise<string> {
+    let outputExtension = "md";
+    if (suggestedExtension != null) {
+      outputExtension = suggestedExtension;
+    }
+
     const tempOutputPath = path.join(
       os.tmpdir(),
-      `markdown_output_${Date.now()}.md`,
+      `markdown_output_${Date.now()}.${outputExtension}`,
     );
     fs.writeFileSync(tempOutputPath, content);
     return tempOutputPath;
+  }
+
+  private static normalizePath(p: string): string {
+    return path.normalize(p);
+  }
+  
+  private static expandHome(filepath: string): string {
+    if (filepath.startsWith('~/') || filepath === '~') {
+      return path.join(os.homedir(), filepath.slice(1));
+    }
+    return filepath;
   }
 
   static async toMarkdown({
@@ -66,8 +86,17 @@ export class Markdownify {
 
       if (url) {
         const response = await fetch(url);
-        const content = await response.text();
-        inputPath = await this.saveToTempFile(content);
+
+        let extension = null;
+
+        if (url.endsWith(".pdf")) {
+          extension = "pdf";
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const content = Buffer.from(arrayBuffer);
+
+        inputPath = await this.saveToTempFile(content, extension);
         isTemporary = true;
       } else if (filePath) {
         inputPath = filePath;
@@ -97,6 +126,20 @@ export class Markdownify {
   }: {
     filePath: string;
   }): Promise<MarkdownResult> {
+    // Check file type is *.md or *.markdown
+    const normPath = this.normalizePath(path.resolve(this.expandHome(filePath)));
+    const markdownExt = [".md", ".markdown"];
+    if (!markdownExt.includes(path.extname(normPath))){
+      throw new Error("Required file is not a Markdown file.");
+    }
+
+    if (process.env?.MD_SHARE_DIR) {
+      const allowedShareDir = this.normalizePath(path.resolve(this.expandHome(process.env.MD_SHARE_DIR)));
+      if (!normPath.startsWith(allowedShareDir)) {
+        throw new Error(`Only files in ${allowedShareDir} are allowed.`);
+      }
+    }
+
     if (!fs.existsSync(filePath)) {
       throw new Error("File does not exist");
     }
