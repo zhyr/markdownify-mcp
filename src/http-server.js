@@ -174,6 +174,32 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     
+    // 兼容/api/health等老路由
+    if (pathName === '/api/health') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ status: 'OK', service: 'Markdownify MCP HTTP Server' }));
+      return;
+    }
+    if (pathName === '/api/webpage' && req.method === 'POST') {
+      // 复用/webpage逻辑
+      let body = '';
+      req.on('data', chunk => {
+        body += chunk.toString();
+      });
+      req.on('end', async () => {
+        try {
+          const data = JSON.parse(body);
+          const markdown = await markdownify.webpageToMarkdown(data.url);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ markdown }));
+        } catch (error) {
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: '无效的请求数据' }));
+        }
+      });
+      return;
+    }
+    
     // 默认路由 - API说明
     res.writeHead(200, { 'Content-Type': 'text/html' });
     res.end(`

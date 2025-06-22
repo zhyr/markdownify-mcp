@@ -4,6 +4,7 @@ import fs from "fs";
 import path from "path";
 import { Markdownify } from "./Markdownify.js";
 import { randomUUID } from "crypto";
+import { ImageToMarkdownTool } from './tools.js';
 
 // 日志文件路径
 const logDir = path.resolve(process.cwd(), "../../logs");
@@ -74,6 +75,24 @@ const server = http.createServer(async (req, res) => {
               result = await Markdownify.toMarkdown({ url: data.url });
               break;
             case "pdf-to-markdown":
+              if (!data.filePath) {
+                res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
+                res.end(JSON.stringify({ error: "filePath 参数缺失" }));
+                return;
+              }
+              console.log(`[${traceId}] [MCP] 解析文件: ${data.filePath}`);
+              result = await Markdownify.toMarkdown({ filePath: data.filePath });
+              console.log(`[${traceId}] [MCP] 解析结果长度: ${result.text.length}`);
+              break;
+            case "image-to-markdown":
+              if (!data.filePath) {
+                res.writeHead(400, { "Content-Type": "application/json; charset=utf-8" });
+                res.end(JSON.stringify({ error: "filePath 参数缺失" }));
+                return;
+              }
+              console.log(`[${traceId}] [MCP] 解析图片: ${data.filePath}`);
+              // 校验参数
+              ImageToMarkdownTool.inputSchema.parse({ filepath: data.filePath });
               result = await Markdownify.toMarkdown({ filePath: data.filePath });
               break;
             default:
@@ -81,7 +100,7 @@ const server = http.createServer(async (req, res) => {
           }
 
           res.writeHead(200, { "Content-Type": "application/json", "X-Trace-Id": traceId });
-          res.end(JSON.stringify({ markdown: result, traceId }));
+          res.end(JSON.stringify({ markdown: result.text, traceId }));
         } catch (error: any) {
           console.error(`[${traceId}] 处理 /tools/xxx 路由出错:`, error);
           res.writeHead(400, { "Content-Type": "application/json", "X-Trace-Id": traceId });

@@ -111,7 +111,7 @@ export class Markdownify {
         fs.unlinkSync(inputPath);
       }
 
-      return { path: outputPath, text };
+      return { path: outputPath, text: text.toString('utf-8')  };
     } catch (e: unknown) {
       if (e instanceof Error) {
         throw new Error(`Error processing to Markdown: ${e.message}`);

@@ -91,3 +91,6 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 打包
+docker buildx build --platform linux/amd64 -t markdownify-mcp:latest . --load
