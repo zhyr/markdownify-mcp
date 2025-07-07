@@ -1,42 +1,29 @@
-import http from "http";
-import url from "url";
-import fs from "fs";
-import path from "path";
+/// <reference types="node" />
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import * as http from 'http';
+import * as url from 'url';
 import { Markdownify } from "./Markdownify.js";
 import { randomUUID } from "crypto";
-import { ImageToMarkdownTool } from './tools.js';
+import { ImageToMarkdownTool } from "./tools.js";
+import { logger } from "./utils/logger.js";
+import { ensurePythonDepsReady } from "./utils/python-check.js";
 
-// 日志文件路径
-const logDir = path.resolve(process.cwd(), "../../logs");
-if (!fs.existsSync(logDir)) {
-  fs.mkdirSync(logDir, { recursive: true });
-}
-const allLogStream = fs.createWriteStream(path.join(logDir, "all.log"), { flags: "a" });
-const errorLogStream = fs.createWriteStream(path.join(logDir, "error.log"), { flags: "a" });
+ensurePythonDepsReady();
 
-function logToFile(...args: any[]) {
-  const msg = `[${new Date().toISOString()}] ` + args.map(String).join(" ") + "\n";
-  allLogStream.write(msg);
+function logBoth(...args: any[]) {
+  logger.info(...args);
+  console.log(...args);
 }
-function errorToFile(...args: any[]) {
-  const msg = `[${new Date().toISOString()}] ` + args.map(String).join(" ") + "\n";
-  allLogStream.write(msg);
-  errorLogStream.write(msg);
+
+function getErrorMessage(error: any) {
+  return error?.message || String(error);
 }
-const origLog = console.log;
-const origError = console.error;
-console.log = (...args: any[]) => {
-  origLog(...args);
-  logToFile(...args);
-};
-console.error = (...args: any[]) => {
-  origError(...args);
-  errorToFile(...args);
-};
 
 const server = http.createServer(async (req, res) => {
   const traceId = randomUUID();
-  console.log(`[${traceId}] 收到请求:`, req.method, req.url);
+  logBoth(`[${traceId}] 收到请求:`, req.method, req.url);
 
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
@@ -55,6 +42,7 @@ const server = http.createServer(async (req, res) => {
     if (pathName === "/health") {
       res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ status: "OK", service: "Markdownify MCP HTTP Server" }));
+      logBoth(`[${traceId}] 响应: 200 /health`);
       return;
     }
 
@@ -66,7 +54,7 @@ const server = http.createServer(async (req, res) => {
         try {
           const data = body ? JSON.parse(body) : {};
           const tool = pathName.replace("/tools/", "");
-          console.log(`[${traceId}] [MCP] 工具调用: ${tool}, 参数:`, data);
+          logBoth(`[${traceId}] [MCP] 工具调用: ${tool}, 参数:`, data);
 
           let result: any;
           switch (tool) {
@@ -80,9 +68,9 @@ const server = http.createServer(async (req, res) => {
                 res.end(JSON.stringify({ error: "filePath 参数缺失" }));
                 return;
               }
-              console.log(`[${traceId}] [MCP] 解析文件: ${data.filePath}`);
+              logBoth(`[${traceId}] [MCP] 解析文件: ${data.filePath}`);
               result = await Markdownify.toMarkdown({ filePath: data.filePath });
-              console.log(`[${traceId}] [MCP] 解析结果长度: ${result.text.length}`);
+              logBoth(`[${traceId}] [MCP] 解析结果长度: ${result.text.length}`);
               break;
             case "image-to-markdown":
               if (!data.filePath) {
@@ -90,9 +78,11 @@ const server = http.createServer(async (req, res) => {
                 res.end(JSON.stringify({ error: "filePath 参数缺失" }));
                 return;
               }
-              console.log(`[${traceId}] [MCP] 解析图片: ${data.filePath}`);
-              // 校验参数
-              ImageToMarkdownTool.inputSchema.parse({ filepath: data.filePath });
+              logBoth(`[${traceId}] [MCP] 解析图片: ${data.filePath}`);
+              // 基本参数校验
+              if (!data.filePath || typeof data.filePath !== 'string') {
+                throw new Error('无效的文件路径参数');
+              }
               result = await Markdownify.toMarkdown({ filePath: data.filePath });
               break;
             default:
@@ -101,10 +91,12 @@ const server = http.createServer(async (req, res) => {
 
           res.writeHead(200, { "Content-Type": "application/json", "X-Trace-Id": traceId });
           res.end(JSON.stringify({ markdown: result.text, traceId }));
+          logBoth(`[${traceId}] 响应: 200 ${pathName}`);
+          return;
         } catch (error: any) {
-          console.error(`[${traceId}] 处理 /tools/xxx 路由出错:`, error);
+          logBoth(`[${traceId}] 处理 /tools/xxx 路由出错:`, error);
           res.writeHead(400, { "Content-Type": "application/json", "X-Trace-Id": traceId });
-          res.end(JSON.stringify({ error: error.message || "无效的请求数据", traceId }));
+          res.end(JSON.stringify({ error: getErrorMessage(error) || "无效的请求数据", traceId }));
         }
       });
       return;
@@ -120,7 +112,10 @@ const server = http.createServer(async (req, res) => {
           const markdown = await Markdownify.toMarkdown({ url: data.url });
           res.writeHead(200, { "Content-Type": "application/json", "X-Trace-Id": traceId });
           res.end(JSON.stringify({ markdown, traceId }));
+          logBoth(`[${traceId}] 响应: 200 ${pathName}`);
+          return;
         } catch (error: any) {
+          logBoth(`[${traceId}] 处理 /webpage 路由出错:`, error);
           res.writeHead(400, { "Content-Type": "application/json", "X-Trace-Id": traceId });
           res.end(JSON.stringify({ error: "无效的请求数据", traceId }));
         }
@@ -132,7 +127,7 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(404, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: "未找到路由" }));
   } catch (error: any) {
-    console.error(`[${traceId}] 服务器错误:`, error);
+    logBoth(`[${traceId}] 服务器错误:`, error);
     res.writeHead(500, { "Content-Type": "application/json", "X-Trace-Id": traceId });
     res.end(JSON.stringify({ error: "服务器内部错误", traceId }));
   }
@@ -140,5 +135,5 @@ const server = http.createServer(async (req, res) => {
 
 const PORT = process.env.HTTP_PORT || 3005;
 server.listen(PORT, () => {
-  console.log(`Markdownify MCP HTTP服务器运行在 http://localhost:${PORT}`);
+  logBoth(`Markdownify MCP HTTP服务器运行在 http://localhost:${PORT}`);
 });

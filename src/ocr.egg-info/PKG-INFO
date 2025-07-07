@@ -10,98 +10,57 @@ Dynamic: license-file
 
 # Markdownify MCP Server
 
-Markdownify是一个Model Context Protocol (MCP)服务器，用于将各种文件类型和Web内容转换为Markdown格式。它提供一系列工具，可将PDF、图像、音频文件、网页等转换为易于阅读和共享的Markdown文本。
+> Help! I need someone with a Windows computer to help me add support for Markdownify-MCP on Windows. PRs exist but I cannot test them. Post [here](https://github.com/zcaceres/markdownify-mcp/issues/18) if interested.
+
+![markdownify mcp logo](logo.jpg)
+
+Markdownify is a Model Context Protocol (MCP) server that converts various file types and web content to Markdown format. It provides a set of tools to transform PDFs, images, audio files, web pages, and more into easily readable and shareable Markdown text.
 
 <a href="https://glama.ai/mcp/servers/bn5q4b0ett"><img width="380" height="200" src="https://glama.ai/mcp/servers/bn5q4b0ett/badge" alt="Markdownify Server MCP server" /></a>
 
-## 功能特性
+## Features
 
-- 多种文件类型转换为Markdown:
+- Convert multiple file types to Markdown:
   - PDF
-  - 图像（带描述）
-  - 音频（带转录）
+  - Images
+  - Audio (with transcription)
   - DOCX
   - XLSX
   - PPTX
-- Web内容转换为Markdown:
-  - YouTube视频转录
-  - Bing搜索结果
-  - 一般网页
-- 社交媒体内容转换:
-  - Twitter/X帖子
-  - Instagram帖子
-  - LinkedIn内容
-  - Facebook帖子
-  - Reddit帖子
-- 图表生成:
-  - 流程图
-  - 序列图
-  - 类图
-  - ER图
-  - 甘特图
-  - 数据图表
-  - 思维导图
-- 检索现有Markdown文件
+- Convert web content to Markdown:
+  - YouTube video transcripts
+  - Bing search results
+  - General web pages
+- Retrieve existing Markdown files
 
-## 快速开始
+## Getting Started
 
-1. 克隆此仓库
-2. 安装依赖:
+1. Clone this repository
+2. Install dependencies:
    ```
    pnpm install
    ```
 
-注意: 这也将安装`uv`和相关Python依赖。
+Note: this will also install `uv` and related Python depdencies.
 
-3. 编译项目:
+3. Build the project:
    ```
    pnpm run build
    ```
-4. 启动服务器:
+4. Start the server:
    ```
    pnpm start
    ```
 
-## HTTP服务
+## Development
 
-服务器现在同时提供HTTP API接口和MCP接口，默认端口是3005（如果被占用会自动尝试3006-3015）。
+- Use `pnpm run dev` to start the TypeScript compiler in watch mode
+- Modify `src/server.ts` to customize server behavior
+- Add or modify tools in `src/tools.ts`
 
-### HTTP端点
+## Usage with Desktop App
 
-- `GET /health` - 健康检查
-- `POST /tools/{toolName}` - 工具执行
-
-### 使用HTTP API示例
-
-```bash
-# 检查服务健康状态
-curl http://localhost:3005/health
-
-# 网页转Markdown
-curl -X POST -H "Content-Type: application/json" \
-  -d '{"url": "https://example.com"}' \
-  http://localhost:3005/tools/webpage-to-markdown
-
-# 图表生成
-curl -X POST -H "Content-Type: application/json" \
-  -d '{"description": "开始->处理->结束", "diagramType": "flowchart"}' \
-  http://localhost:3005/tools/diagram-to-markdown
-
-# 社交媒体内容转换
-curl -X POST -H "Content-Type: application/json" \
-  -d '{"url": "https://twitter.com/user/status/123456789", "platform": "twitter"}' \
-  http://localhost:3005/tools/social-to-markdown
-```
-
-## 开发
-
-- 使用`pnpm run dev`在监视模式下启动TypeScript编译器
-- 修改`src/server.ts`以自定义服务器行为
-- 添加或修改`src/tools.ts`中的工具
-
-## 与桌面应用集成
-
-要将此服务器与桌面应用集成，请在应用的服务器配置中添加以下内容:
+To integrate this server with a desktop app, add the following to your app's server configuration:
 
 ```js
 {
@@ -112,7 +71,7 @@ curl -X POST -H "Content-Type: application/json" \
         "{ABSOLUTE PATH TO FILE HERE}/dist/index.js"
       ],
       "env": {
-        // 默认情况下，服务器将使用`uv`的默认安装位置
+        // By default, the server will use the default install location of `uv`
         "UV_PATH": "/path/to/uv"
       }
     }
@@ -120,53 +79,28 @@ curl -X POST -H "Content-Type: application/json" \
 }
 ```
 
-## 可用工具
+## Available Tools
 
-### 基础文档转换工具
+- `youtube-to-markdown`: Convert YouTube videos to Markdown
+- `pdf-to-markdown`: Convert PDF files to Markdown
+- `bing-search-to-markdown`: Convert Bing search results to Markdown
+- `webpage-to-markdown`: Convert web pages to Markdown
+- `image-to-markdown`: Convert images to Markdown with metadata
+- `audio-to-markdown`: Convert audio files to Markdown with transcription
+- `docx-to-markdown`: Convert DOCX files to Markdown
+- `xlsx-to-markdown`: Convert XLSX files to Markdown
+- `pptx-to-markdown`: Convert PPTX files to Markdown
+- `get-markdown-file`: Retrieve an existing Markdown file. File extension must end with: *.md, *.markdown.
+  
+  OPTIONAL: set `MD_SHARE_DIR` env var to restrict the directory from which files can be retrieved, e.g. `MD_SHARE_DIR=[SOME_PATH] pnpm run start` 
 
-- `youtube-to-markdown`: 将YouTube视频转换为Markdown
-- `pdf-to-markdown`: 将PDF文件转换为Markdown
-- `bing-search-to-markdown`: 将Bing搜索结果转换为Markdown
-- `webpage-to-markdown`: 将网页转换为Markdown
-- `image-to-markdown`: 将图像转换为带元数据的Markdown
-- `audio-to-markdown`: 将音频文件转换为带转录的Markdown
-- `docx-to-markdown`: 将DOCX文件转换为Markdown
-- `xlsx-to-markdown`: 将XLSX文件转换为Markdown
-- `pptx-to-markdown`: 将PPTX文件转换为Markdown
-- `get-markdown-file`: 检索现有Markdown文件
+## Contributing
 
-### 扩展工具
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-- `social-to-markdown`: 将社交媒体内容转换为Markdown
-  ```json
-  {
-    "url": "https://twitter.com/user/status/123456789",
-    "platform": "twitter", 
-    "options": {
-      "includeResponses": true,
-      "responsesLimit": 5,
-      "includeMetrics": true,
-      "extractMedia": true
-    }
-  }
-  ```
+## License
 
-- `diagram-to-markdown`: 从描述或结构化数据生成图表
-  ```json
-  {
-    "description": "流程图：开始->处理->结束",
-    "diagramType": "flowchart", 
-    "options": {
-      "direction": "TB",
-      "theme": "default"
-    }
-  }
-  ```
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 贡献
-
-欢迎贡献！请随时提交Pull Request。
-
-## 许可证
-
-此项目使用MIT许可证 - 有关详细信息，请参阅[LICENSE](LICENSE)文件。
+## 打包
+docker buildx build --platform linux/amd64 -t markdownify-mcp:latest . --load

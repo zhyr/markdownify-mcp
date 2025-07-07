@@ -21,26 +21,29 @@ Markdownify is a Model Context Protocol (MCP) server that converts various file 
   - YouTube video transcripts
   - Bing search results
   - General web pages
+  - twitter\reddit
 - Retrieve existing Markdown files
+- build image display
+  - mermaid graph show as svg
 
 ## Getting Started
 
 1. Clone this repository
 2. Install dependencies:
-   ```
-   pnpm install
-   ```
+```
+pnpm install
+```
 
 Note: this will also install `uv` and related Python depdencies.
 
 3. Build the project:
-   ```
-   pnpm run build
-   ```
+```
+pnpm run build
+```
 4. Start the server:
-   ```
-   pnpm start
-   ```
+```
+pnpm start
+```
 
 ## Development
 
@@ -55,16 +58,16 @@ To integrate this server with a desktop app, add the following to your app's ser
 ```js
 {
   "mcpServers": {
-    "markdownify": {
-      "command": "node",
-      "args": [
-        "{ABSOLUTE PATH TO FILE HERE}/dist/index.js"
-      ],
-      "env": {
-        // By default, the server will use the default install location of `uv`
-        "UV_PATH": "/path/to/uv"
-      }
-    }
+ "markdownify": {
+"command": "node",
+"args": [
+  "{ABSOLUTE PATH TO FILE HERE}/dist/index.js"
+],
+"env": {
+  // By default, the server will use the default install location of `uv`
+  "UV_PATH": "/path/to/uv"
+}
+ }
   }
 }
 ```
@@ -94,3 +97,11 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 打包
 docker buildx build --platform linux/amd64 -t markdownify-mcp:latest . --load
+
+## 虚拟环境
+deactivate
+rm -rf .venv
+python3 -m venv .venv
+source .venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt

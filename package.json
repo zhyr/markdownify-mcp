@@ -14,25 +14,28 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc && shx chmod +x dist/*.js",
+    "build": "tsc",
     "prepare": "npm run build",
-    "dev": "tsc --watch",
+    "dev": "nodemon --watch src --exec \"NODE_OPTIONS='--loader ts-node/esm' ts-node src/http-server.ts\"",
     "preinstall": "node preinstall.cjs",
-    "start": "node dist/index.js",
+    "start": "node dist/http-server.js",
+    "start:mcp": "node dist/index.js",
     "test": "bun test",
     "test:watch": "bun test --watch"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.0.1",
     "private-ip": "^3.0.2",
+    "puppeteer": "^24.11.2",
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@types/node": "^22.9.3",
+    "@types/node": "^22.16.0",
     "@types/private-ip": "^1.0.3",
     "bun": "^1.1.41",
     "shx": "^0.3.4",
     "ts-jest": "^29.2.5",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.2"
   },
   "packageManager": "pnpm@10.10.0+sha512.d615db246fe70f25dcfea6d8d73dee782ce23e2245e3c4f6f888249fb568149318637dca73c2c5c8ef2a4ca0d5657fb9567188bfab47f566d1ee6ce987815c39"

@@ -3,3 +3,6 @@ pillow
 pytesseract
 magika
 markdownify
+yt-dlp
+ffmpeg
+openai-whisper
