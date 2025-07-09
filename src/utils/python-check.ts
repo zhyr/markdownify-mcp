@@ -2,24 +2,13 @@ import fs from "fs";
 import { execSync } from "child_process";
 import path from "path";
 
-export function getMarkitdownPath() {
-  if (process.env.IS_DOCKER_BUILD || process.env.NODE_ENV === "production") {
-    return "/app/.venv/bin/markitdown";
-  }
-  return path.resolve(process.cwd(), ".venv/bin/markitdown");
-}
-
-export function checkMarkitdown() {
-  const markitdownPath = getMarkitdownPath();
-  if (!fs.existsSync(markitdownPath)) {
-    console.error(`[依赖检测] 未找到 markitdown: ${markitdownPath}`);
-    return false;
-  }
+export function checkMarkitdownPythonImport() {
   try {
-    execSync(`${markitdownPath} --help`, { stdio: "ignore" });
+    // 检查 markitdown Python 包能否 import
+    execSync('.venv/bin/python -c "import markitdown"', { stdio: "ignore" });
     return true;
   } catch (e) {
-    console.error(`[依赖检测] markitdown --help 执行失败: ${e}`);
+    console.error(`[依赖检测] markitdown Python import 失败: ${e}`);
     return false;
   }
 }
@@ -38,10 +27,10 @@ export function tryAutoInstallVenvAndDeps() {
 }
 
 export function ensurePythonDepsReady() {
-  if (!checkMarkitdown()) {
-    if (!tryAutoInstallVenvAndDeps() || !checkMarkitdown()) {
+  if (!checkMarkitdownPythonImport()) {
+    if (!tryAutoInstallVenvAndDeps() || !checkMarkitdownPythonImport()) {
       throw new Error("Python依赖未就绪，markitdown 不可用，请人工检查 .venv 和 requirements.txt");
     }
   }
-  console.log("[依赖检测] markitdown 可用，Python依赖就绪。");
+  console.log("[依赖检测] markitdown Python包可用，依赖就绪。");
 }

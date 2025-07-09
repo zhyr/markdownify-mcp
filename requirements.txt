@@ -1,8 +1,8 @@
-markitdown
+# markitdown (install from GitHub in Dockerfile)
 pillow
 pytesseract
 magika
 markdownify
 yt-dlp
-ffmpeg
-openai-whisper
+# openai-whisper   # 未启用，暂不安装
+markitdown==0.0.1a1

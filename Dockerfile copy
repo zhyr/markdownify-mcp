@@ -1,29 +1,42 @@
 # ---------- build stage ----------
 FROM node:18-bullseye AS build
 WORKDIR /app
+# 确保 Docker 构建跳过 setup.sh
 ENV IS_DOCKER_BUILD=1
+
+# 复制依赖定义、脚本及源码（确保 prepare 阶段能找到 tsconfig 和 src）
 COPY package*.json preinstall.cjs tsconfig.json requirements.txt ./
 COPY src ./src
+
+# 安装 **完整依赖**（包括 dev）以便 tsc 可用；npm ci 中的 prepare 脚本会自动运行 tsc
 RUN npm ci
+
+# 显式执行一次构建，产出 dist/** JS 文件（需 devDeps）
 RUN npm run build
+
+# 构建完再移除 devDependencies，减小体积
 RUN npm prune --production
 
 # ---------- runtime ----------
 FROM node:18-bullseye-slim AS runtime
 
+# 安装额外系统依赖（Python&Tesseract）
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  python3 python3-venv python3-pip \
-  tesseract-ocr tesseract-ocr-eng tesseract-ocr-chi-sim tesseract-ocr-chi-tra ffmpeg \
+      python3 python3-venv python3-pip \
+      tesseract-ocr tesseract-ocr-eng tesseract-ocr-chi-sim tesseract-ocr-chi-tra ffmpeg \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
+# 复制生产依赖和构建产物
 COPY --from=build /app/requirements.txt ./requirements.txt 
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/dist ./dist
 COPY package*.json ./
 
 ENV NODE_ENV=production IS_DOCKER_BUILD=1
+
+# Skip chromium download during npm ci (puppeteer)
 ENV PUPPETEER_SKIP_DOWNLOAD=1
 
 RUN python3 -m venv .venv \
@@ -32,8 +45,5 @@ RUN python3 -m venv .venv \
  && echo -e '#!/bin/sh\nexec echo \"markitdown shim for 0.0.1a1\"' > .venv/bin/markitdown && chmod +x .venv/bin/markitdown \
  && tesseract --version \
  && rm -rf /root/.cache/pip
-
-COPY markitdown_cli.py /app/.venv/bin/markitdown
-RUN chmod +x /app/.venv/bin/markitdown
 
 CMD ["node","--no-warnings","dist/http-server.js"]
