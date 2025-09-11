@@ -109,15 +109,41 @@ const server = http.createServer(async (req, res) => {
       req.on("end", async () => {
         try {
           const data = JSON.parse(body);
-          const markdown = await Markdownify.toMarkdown({ url: data.url });
+          const result = await Markdownify.toMarkdown({ url: data.url });
+          logBoth(`[${traceId}] toMarkdown结果: path=${result.path}, text长度=${result.text?.length || 0}`);
+          
+          // 确保返回的内容不为空
+          if (!result.text || result.text.trim().length < 10) {
+            logBoth(`[${traceId}] 警告: 返回内容过短或为空`);
+          }
+          
           res.writeHead(200, { "Content-Type": "application/json", "X-Trace-Id": traceId });
-          res.end(JSON.stringify({ markdown, traceId }));
+          res.end(JSON.stringify({ markdown: result.text, traceId }));
           logBoth(`[${traceId}] 响应: 200 ${pathName}`);
           return;
         } catch (error: any) {
           logBoth(`[${traceId}] 处理 /webpage 路由出错:`, error);
-          res.writeHead(400, { "Content-Type": "application/json", "X-Trace-Id": traceId });
-          res.end(JSON.stringify({ error: "无效的请求数据", traceId }));
+          
+          // 根据错误类型返回不同的状态码
+          let statusCode = 500;
+          let errorMessage = "服务器内部错误";
+          
+          if (error.message && error.message.includes("无效的请求数据")) {
+            statusCode = 400;
+            errorMessage = "无效的请求数据";
+          } else if (error.message && error.message.includes("timeout")) {
+            statusCode = 408;
+            errorMessage = "请求超时，请稍后重试";
+          } else if (error.message && error.message.includes("无法获取网页内容")) {
+            statusCode = 502;
+            errorMessage = "无法获取网页内容";
+          } else if (error.message && error.message.includes("HTTP")) {
+            statusCode = 502;
+            errorMessage = "网页访问失败";
+          }
+          
+          res.writeHead(statusCode, { "Content-Type": "application/json", "X-Trace-Id": traceId });
+          res.end(JSON.stringify({ error: errorMessage, traceId }));
         }
       });
       return;

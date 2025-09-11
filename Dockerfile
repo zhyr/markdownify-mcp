@@ -14,6 +14,7 @@ FROM node:18-bullseye-slim AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
   python3 python3-venv python3-pip \
   tesseract-ocr tesseract-ocr-eng tesseract-ocr-chi-sim tesseract-ocr-chi-tra ffmpeg \
+  docker.io curl wget postgresql-client \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -25,6 +26,18 @@ COPY package*.json ./
 
 ENV NODE_ENV=production IS_DOCKER_BUILD=1
 ENV PUPPETEER_SKIP_DOWNLOAD=1
+
+# Install Chromium for Puppeteer (more stable than Chrome)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+  chromium \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install uv for Python package management
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
+
+# Set Chromium path for Puppeteer
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
 RUN python3 -m venv .venv \
  && .venv/bin/pip install --no-cache-dir --upgrade pip setuptools wheel \

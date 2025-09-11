@@ -14,7 +14,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "rimraf dist && tsc --project tsconfig.build.json --skipLibCheck",
+    "build": "rimraf dist && tsc --project tsconfig.json --skipLibCheck",
     "prepare": "npm run build",
     "dev": "nodemon --watch src --exec \"NODE_OPTIONS='--loader ts-node/esm' ts-node src/http-server.ts\"",
     "preinstall": "node preinstall.cjs",
