@@ -159,7 +159,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || process.env.HTTP_PORT || 3005;
+const PORT = parseInt(process.env.PORT || process.env.HTTP_PORT || '3005', 10);
 server.listen(PORT, '0.0.0.0', () => {
   logBoth(`Markdownify MCP HTTP服务器运行在 http://0.0.0.0:${PORT}`);
 });
