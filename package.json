@@ -33,6 +33,7 @@
     "@types/node": "^22.16.0",
     "@types/private-ip": "^1.0.3",
     "bun": "^1.1.41",
+    "nodemon": "^3.1.10",
     "shx": "^0.3.4",
     "ts-jest": "^29.2.5",
     "ts-node-dev": "^2.0.0",

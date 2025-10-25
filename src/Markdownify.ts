@@ -134,10 +134,26 @@ export class Markdownify {
       let isTemporary = false;
 
       if (url) {
+        // 对于所有网站，优先使用通用Puppeteer方法（智能内容提取）
+        try {
+          console.log(`[Markdownify] 优先级1: 尝试使用通用Puppeteer方法（智能内容提取）`);
+          const generalContent = await this.fetchWebpageWithPuppeteer(url);
+          if (generalContent && generalContent.length > 50) {
+            const path = await this.saveToTempFile(generalContent, "md");
+            console.log(`[Markdownify] 通用Puppeteer抓取成功，内容长度: ${generalContent.length}`);
+            return { path, text: generalContent };
+          } else {
+            console.log(`[Markdownify] 通用Puppeteer抓取内容过短，尝试下一个方案`);
+          }
+        } catch (e) {
+          console.error("通用Puppeteer抓取失败，尝试下一个方案:", e);
+        }
+
+        // 如果是知乎，尝试专门的知乎处理方法
         if (url.includes("zhihu.com")) {
-          console.log(`[Markdownify] 检测到知乎URL，尝试多种抓取方式: ${url}`);
+          console.log(`[Markdownify] 检测到知乎URL，尝试专门的知乎处理方法: ${url}`);
           
-          // 优先尝试Jina AI
+          // 1. 使用Jina AI（第三方API，稳定但需要API Key）
           let jinaApiKey = process.env.JINA_API_KEY;
           if (!jinaApiKey) {
             jinaApiKey = await this.getApiConfig('jina');
@@ -145,19 +161,23 @@ export class Markdownify {
           
           if (jinaApiKey) {
             try {
-              console.log(`[Markdownify] 尝试使用Jina AI抓取知乎内容`);
+              console.log(`[Markdownify] 优先级2: 尝试使用Jina AI抓取知乎内容`);
               const jinaContent = await this.fetchWithJinaAI(url, jinaApiKey);
               if (jinaContent && jinaContent.length > 50) {
                 const path = await this.saveToTempFile(jinaContent, "md");
                 console.log(`[Markdownify] Jina AI抓取成功，内容长度: ${jinaContent.length}`);
                 return { path, text: jinaContent };
+              } else {
+                console.log(`[Markdownify] Jina AI抓取内容过短，尝试下一个方案`);
               }
             } catch (e) {
-              console.log(`[Markdownify] Jina AI抓取失败，尝试MitaReader: ${e}`);
+              console.error("Jina AI抓取知乎失败，尝试下一个方案:", e);
             }
+          } else {
+            console.log(`[Markdownify] 未找到Jina API Key，跳过Jina AI方案`);
           }
           
-          // 尝试MitaReader
+          // 2. 使用MitaReader（备用第三方API）
           let mitaApiKey = process.env.MITA_READER_API_KEY;
           if (!mitaApiKey) {
             mitaApiKey = await this.getApiConfig('mitareader');
@@ -165,21 +185,25 @@ export class Markdownify {
           
           if (mitaApiKey) {
             try {
-              console.log(`[Markdownify] 尝试使用MitaReader抓取知乎内容`);
+              console.log(`[Markdownify] 优先级3: 尝试使用MitaReader抓取知乎内容`);
               const mitaContent = await this.fetchWithMitaReader(url, mitaApiKey);
               if (mitaContent && mitaContent.length > 50) {
                 const path = await this.saveToTempFile(mitaContent, "md");
                 console.log(`[Markdownify] MitaReader抓取成功，内容长度: ${mitaContent.length}`);
                 return { path, text: mitaContent };
+              } else {
+                console.log(`[Markdownify] MitaReader抓取内容过短，尝试下一个方案`);
               }
             } catch (e) {
-              console.log(`[Markdownify] MitaReader抓取失败，尝试Puppeteer: ${e}`);
+              console.error("MitaReader抓取知乎失败，尝试下一个方案:", e);
             }
+          } else {
+            console.log(`[Markdownify] 未找到MitaReader API Key，跳过MitaReader方案`);
           }
           
-          // 最后尝试Puppeteer
+          // 3. 使用知乎专用Puppeteer + Cookie
           try {
-            console.log(`[Markdownify] 尝试使用Puppeteer抓取知乎内容`);
+            console.log(`[Markdownify] 优先级4: 尝试使用知乎专用Puppeteer + Cookie`);
             const zhihuText = await this.fetchZhihuArticleWithPuppeteer(url);
             console.log(`[Markdownify] Puppeteer抓取结果长度: ${zhihuText?.length || 0}`);
             if (zhihuText && zhihuText.length > 20) {
@@ -187,13 +211,17 @@ export class Markdownify {
               console.log(`[Markdownify] Puppeteer抓取成功`);
               return { path, text: zhihuText };
             } else {
-              console.log(`[Markdownify] Puppeteer抓取内容过短，降级为fetch`);
+              console.log(`[Markdownify] Puppeteer抓取内容过短，尝试下一个方案`);
             }
           } catch (e) {
-            console.error("puppeteer 抓取知乎失败，降级为 fetch:", e);
-            // 可降级为 fetch+Cookie 方案
+            console.error("Puppeteer抓取知乎失败，尝试下一个方案:", e);
           }
+          
+          console.log(`[Markdownify] 知乎所有专门方法都失败，降级为普通fetch`);
         }
+        
+        // 如果通用Puppeteer方法失败，尝试其他通用方法
+        console.log(`[Markdownify] 通用Puppeteer方法失败，尝试其他通用方法`);
         
         // 检测微信公众号，使用Puppeteer处理
         if (url.includes('mp.weixin.qq.com')) {
@@ -298,20 +326,28 @@ export class Markdownify {
       }
 
       let text: string;
-      try {
-        text = await this._markitdown(inputPath, projectRoot, uvPath);
-        console.log(`[Markdownify] markitdown处理完成，结果长度: ${text.length}`);
-      } catch (markitdownError) {
-        console.error(`[Markdownify] markitdown处理失败: ${markitdownError}`);
-        // 使用简单的HTML到文本转换作为fallback
-        const htmlContent = fs.readFileSync(inputPath, 'utf-8');
-        text = this.simpleHtmlToText(htmlContent);
-        console.log(`[Markdownify] 使用fallback处理，结果长度: ${text.length}`);
-        
-        // 确保fallback结果不为空
-        if (!text || text.trim().length < 10) {
-          text = "无法提取网页内容，请检查链接是否有效。";
+      
+      // 只有在没有URL（即处理文件）或者所有URL处理方法都失败时才使用markitdown
+      if (!url) {
+        try {
+          text = await this._markitdown(inputPath, projectRoot, uvPath);
+          console.log(`[Markdownify] markitdown处理完成，结果长度: ${text.length}`);
+        } catch (markitdownError) {
+          console.error(`[Markdownify] markitdown处理失败: ${markitdownError}`);
+          // 使用简单的HTML到文本转换作为fallback
+          const htmlContent = fs.readFileSync(inputPath, 'utf-8');
+          text = this.simpleHtmlToText(htmlContent);
+          console.log(`[Markdownify] 使用fallback处理，结果长度: ${text.length}`);
+          
+          // 确保fallback结果不为空
+          if (!text || text.trim().length < 10) {
+            text = "无法提取网页内容，请检查链接是否有效。";
+          }
         }
+      } else {
+        // 对于URL，如果所有方法都失败，返回错误信息
+        text = "无法提取网页内容，可能页面需要登录或存在反爬虫机制。";
+        console.log(`[Markdownify] 所有URL处理方法都失败，返回错误信息`);
       }
       
       // 对网页内容进行智能过滤，提取核心内容
@@ -451,17 +487,31 @@ export class Markdownify {
     try {
       console.log(`[Config] 查询数据库获取${provider}配置`);
       
-      // 优先尝试通过环境变量获取数据库连接信息
-      const dbHost = process.env.DB_HOST || 'localhost';
-      const dbPort = process.env.DB_PORT || '5432';
-      const dbUser = process.env.DB_USER || 'yueliapp';
-      const dbName = process.env.DB_NAME || 'yuelideck';
-      const dbPassword = process.env.DB_PASSWORD || '';
+      // 检查是否在Docker环境中
+      const isDocker = process.env.DOCKER_CONTAINER === 'true' || process.env.NODE_ENV === 'production';
       
-      // 构建psql连接字符串
-      const connectionString = `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`;
-      const command = `psql "${connectionString}" -t -c "SELECT api_key FROM llm_configs WHERE (provider ILIKE '%${provider}%' OR model_name ILIKE '%${provider}%' OR title ILIKE '%${provider}%') AND is_active = true AND api_key IS NOT NULL LIMIT 1;"`;
+      let command: string;
       
+      if (isDocker) {
+        // Docker环境：使用docker exec命令
+        const dbUser = process.env.DB_USER || 'yueliapp';
+        const dbName = process.env.DB_NAME || 'yuelideck';
+        const containerName = process.env.DB_CONTAINER_NAME || 'yuelideck';
+        
+        command = `docker exec ${containerName} psql -U ${dbUser} -d ${dbName} -t -c "SELECT api_key FROM llm_configs WHERE (provider ILIKE '%${provider}%' OR model_name ILIKE '%${provider}%' OR title ILIKE '%${provider}%') AND is_active = true AND api_key IS NOT NULL LIMIT 1;"`;
+      } else {
+        // 本地环境：直接使用psql
+        const dbHost = process.env.DB_HOST || 'localhost';
+        const dbPort = process.env.DB_PORT || '5432';
+        const dbUser = process.env.DB_USER || 'yueliapp';
+        const dbName = process.env.DB_NAME || 'yuelideck';
+        const dbPassword = process.env.DB_PASSWORD || '';
+        
+        const connectionString = `postgresql://${dbUser}:${dbPassword}@${dbHost}:${dbPort}/${dbName}`;
+        command = `psql "${connectionString}" -t -c "SELECT api_key FROM llm_configs WHERE (provider ILIKE '%${provider}%' OR model_name ILIKE '%${provider}%' OR title ILIKE '%${provider}%') AND is_active = true AND api_key IS NOT NULL LIMIT 1;"`;
+      }
+      
+      console.log(`[Config] 执行数据库查询命令: ${command}`);
       const { stdout, stderr } = await execAsync(command);
       
       if (stderr) {
@@ -1128,6 +1178,142 @@ export class Markdownify {
       } else {
         throw new Error('内容提取失败或内容过短');
       }
+
+    } catch (error) {
+      console.error(`[Puppeteer] 抓取失败: ${error}`);
+      throw error;
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+  }
+
+  /**
+   * 通用网页内容提取（适用于所有网站）
+   */
+  static async fetchWebpageWithPuppeteer(url: string): Promise<string> {
+    let browser;
+    try {
+      console.log(`[Puppeteer] 开始启动浏览器...`);
+      browser = await puppeteer.launch({
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--disable-gpu',
+          '--disable-web-security',
+          '--disable-features=VizDisplayCompositor',
+          '--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        ]
+      });
+
+      const page = await browser.newPage();
+
+      // 设置更真实的浏览器环境
+      await page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+      await page.setViewport({ width: 1920, height: 1080 });
+
+      console.log(`[Puppeteer] 开始抓取网页: ${url}`);
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: 10000 });
+      
+      // 等待页面加载完成
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // 通用智能内容提取
+      const content = await page.evaluate(() => {
+        // 1. 提取页面标题
+        const title = document.querySelector('h1')?.textContent?.trim() || 
+                     document.querySelector('title')?.textContent?.trim() ||
+                     document.title;
+
+        // 2. 尝试多种内容选择器（按优先级）
+        const contentSelectors = [
+          // 文章内容
+          'article',
+          '.article',
+          '.post',
+          '.entry',
+          '.content',
+          '.main-content',
+          '.post-content',
+          '.entry-content',
+          '.article-content',
+          // 知乎特定
+          '.Post-RichTextContainer',
+          '.RichContent-inner',
+          '.QuestionRichText',
+          // 微信公众号
+          '#js_content',
+          '.rich_media_content',
+          // 技术博客
+          '.post-body',
+          '.article-body',
+          // 新闻网站
+          '.article-body',
+          '.news-content',
+          '.story-body',
+          // 通用
+          'main',
+          '.main',
+          '#main',
+          '.container',
+          '.wrapper'
+        ];
+
+        let mainContent = '';
+        for (const selector of contentSelectors) {
+          const element = document.querySelector(selector);
+          if (element) {
+            const text = element.textContent?.trim();
+            if (text && text.length > 100) {
+              mainContent = text;
+              break;
+            }
+          }
+        }
+
+        // 3. 如果没有找到主要内容，尝试提取body中的文本
+        if (!mainContent) {
+          const bodyText = document.body?.textContent?.trim();
+          if (bodyText && bodyText.length > 100) {
+            mainContent = bodyText;
+          }
+        }
+
+        // 4. 清理内容
+        if (mainContent) {
+          // 移除多余的空白字符
+          mainContent = mainContent.replace(/\s+/g, ' ').trim();
+          
+          // 限制长度
+          if (mainContent.length > 10000) {
+            mainContent = mainContent.substring(0, 10000) + '...';
+          }
+        }
+
+        // 5. 构建最终内容
+        let fullContent = '';
+        
+        if (title && title !== '') {
+          fullContent += `# ${title}\n\n`;
+        }
+        
+        if (mainContent && mainContent !== '') {
+          fullContent += mainContent;
+        } else {
+          fullContent += '无法提取网页内容，可能页面需要登录或存在反爬虫机制。';
+        }
+
+        return fullContent.trim();
+      });
+
+      console.log(`[Puppeteer] 内容提取完成，长度: ${content.length}`);
+      return content;
 
     } catch (error) {
       console.error(`[Puppeteer] 抓取失败: ${error}`);
